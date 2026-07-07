@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getUserOr401, logActivity } from "@/lib/api-helpers";
+import { LEAD_PIPELINE_STATUS_ORDER } from "@/lib/constants";
+
+// Completing a task of these types auto-advances the lead's sales pipeline
+// (forward only). e.g. finishing a "Site visit" task → Site Visit Done.
+const TASK_PIPELINE_ADVANCE: Record<string, string> = {
+  site_visit: "site_visit_done",
+  booking_follow_up: "booking_expected",
+};
 
 export async function POST(req: NextRequest) {
   const auth = await getUserOr401();
@@ -63,6 +71,18 @@ export async function PATCH(req: NextRequest) {
     await logActivity(supabase, "task_completed", `Task completed: ${data.title}`, user.id, {
       lead_id: data.lead_id, contact_id: data.contact_id, deal_id: data.deal_id,
     });
+
+    // Auto-advance the lead's sales pipeline (forward only) based on task type.
+    const target = TASK_PIPELINE_ADVANCE[data.type];
+    if (target && data.lead_id) {
+      const { data: leadRow } = await supabase.from("leads").select("pipeline_status").eq("id", data.lead_id).single();
+      const cur = LEAD_PIPELINE_STATUS_ORDER.indexOf(leadRow?.pipeline_status ?? "contacted");
+      const next = LEAD_PIPELINE_STATUS_ORDER.indexOf(target);
+      if (next > cur) {
+        await supabase.from("leads").update({ pipeline_status: target, last_activity_at: new Date().toISOString() }).eq("id", data.lead_id);
+        await logActivity(supabase, "status_changed", `Pipeline moved to ${target.replace(/_/g, " ")} (task completed)`, user.id, { lead_id: data.lead_id });
+      }
+    }
   }
   return NextResponse.json({ data });
 }

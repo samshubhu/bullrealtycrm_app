@@ -707,9 +707,14 @@ function labelize(value?: string | null) {
 
 function siteVisitCounts(lead: any) {
   const visits = lead.site_visits ?? [];
+  // Site-visit tasks count too (completing one auto-advances the pipeline).
+  const svTasks = (lead.tasks ?? []).filter((task: any) => task.type === "site_visit");
+  const pipelineDone = (lead.pipeline_status === "site_visit_done" || lead.pipeline_status === "re_site_visit") ? 1 : 0;
   return {
-    done: visits.filter((visit: any) => visit.status === "completed").length,
-    pending: visits.filter((visit: any) => ["scheduled", "no_show"].includes(visit.status)).length,
+    done: visits.filter((visit: any) => visit.status === "completed").length
+      + svTasks.filter((task: any) => task.status === "completed").length + pipelineDone,
+    pending: visits.filter((visit: any) => ["scheduled", "no_show"].includes(visit.status)).length
+      + svTasks.filter((task: any) => !["completed", "cancelled"].includes(task.status)).length,
   };
 }
 

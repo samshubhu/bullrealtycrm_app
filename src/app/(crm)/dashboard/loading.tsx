@@ -82,11 +82,11 @@ function DashboardSkeletonCard({ type, className }: { type: string; className?: 
 
 function KpiSkeleton({ tone }: { tone: "green" | "red" }) {
   return (
-    <div className="flex h-[calc(100%-2rem)] items-center">
-      <div>
-        <div className={`skeleton mb-3 h-8 w-28 rounded ${tone === "red" ? "bg-red-100" : "bg-emerald-100"}`} />
-        <div className="skeleton h-3 w-40 rounded" />
-      </div>
+    <div className="flex h-[calc(100%-2rem)] min-h-[104px] flex-col items-center justify-center">
+      <div className={`skeleton h-9 w-9 rounded-lg ${tone === "red" ? "bg-red-100" : "bg-emerald-100"}`} />
+      <div className={`skeleton mt-3 h-8 w-28 rounded ${tone === "red" ? "bg-red-100" : "bg-emerald-100"}`} />
+      <div className="skeleton mt-2 h-3 w-20 rounded" />
+      <div className="skeleton mt-3.5 h-1.5 w-24 rounded-full" />
     </div>
   );
 }

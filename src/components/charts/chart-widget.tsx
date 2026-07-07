@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import {
   BarChart3, PieChart, LineChart, Activity, Grid3x3, Table2, Filter,
   Maximize2, MoreVertical, Download, Mail, ChevronDown, ChevronRight, Hash, X, MoveDiagonal2,
-  GripVertical, Minimize2,
+  GripVertical, Minimize2, TrendingUp, TrendingDown, Users, Target, Flame, Sparkles,
 } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
@@ -170,11 +170,7 @@ export function ChartWidget(props: Props) {
 
       <div className="flex-1 min-h-0">
         {kind === "kpi" && kpi ? (
-          <div className="flex items-center h-full">
-            <p className={cn("text-3xl font-bold", kpi.tone === "green" ? "text-emerald-600" : kpi.tone === "red" ? "text-red-500" : "text-brand-600")}>
-              {kpiText(kpi.value, format, compact)}
-            </p>
-          </div>
+          <KpiCard title={title} valueText={kpiText(kpi.value, format, compact)} value={kpi.value} tone={kpi.tone} format={format} />
         ) : (
           renderChart(activeType, data, groupedKeys, format, false, chartHeight)
         )}
@@ -200,6 +196,53 @@ export function ChartWidget(props: Props) {
           onClose={() => setDataOpen(false)}
         />
       )}
+    </div>
+  );
+}
+
+/* ---------- premium KPI tile ---------- */
+
+const KPI_TONES: Record<"green" | "red" | "blue", { text: string; chip: string; grad: string; bar: string }> = {
+  green: { text: "text-emerald-500", chip: "bg-emerald-50 text-emerald-600", grad: "from-emerald-600 to-emerald-400", bar: "bg-emerald-500" },
+  red: { text: "text-red-400", chip: "bg-red-50 text-red-500", grad: "from-red-500 to-rose-400", bar: "bg-red-500" },
+  blue: { text: "text-brand-400", chip: "bg-brand-50 text-brand-600", grad: "from-brand-600 to-brand-400", bar: "bg-brand-500" },
+};
+
+function kpiVisual(title: string): { Icon: any; caption: string } {
+  const t = title.toLowerCase();
+  if (t.includes("lost")) return { Icon: TrendingDown, caption: "Closed lost" };
+  if (t.includes("won")) return { Icon: TrendingUp, caption: "Closed won" };
+  if (t.includes("conversion") || t.includes("ratio")) return { Icon: Target, caption: "Lead to deal" };
+  if (t.includes("hot")) return { Icon: Flame, caption: "High priority" };
+  if (t.includes("today") || t.includes("new")) return { Icon: Sparkles, caption: "Added today" };
+  if (t.includes("revenue")) return { Icon: TrendingUp, caption: "Revenue" };
+  if (t.includes("lead") || t.includes("contact")) return { Icon: Users, caption: "Total records" };
+  return { Icon: TrendingUp, caption: "" };
+}
+
+function KpiCard({ title, valueText, value, tone, format }: { title: string; valueText: string; value: number; tone: "green" | "red" | "blue"; format?: Fmt }) {
+  const { Icon, caption } = kpiVisual(title);
+  const c = KPI_TONES[tone];
+  const isPercent = format === "percent";
+  const pct = isPercent ? Math.max(0, Math.min(100, value)) : null;
+  return (
+    <div className="relative flex h-full min-h-[104px] flex-col items-center justify-center overflow-hidden text-center">
+      <Icon aria-hidden className={cn("pointer-events-none absolute -right-2 -top-2 h-20 w-20 opacity-[0.06]", c.text)} />
+
+      {/* Centered tone icon chip */}
+      <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-lg", c.chip)}>
+        <Icon className="h-[18px] w-[18px]" />
+      </span>
+
+      {/* Centered value + caption */}
+      <p className={cn("mt-3 bg-gradient-to-br bg-clip-text pb-0.5 text-[1.75rem] font-bold leading-none tracking-tight text-transparent", c.grad)}>
+        {valueText}
+      </p>
+      {caption && <p className="mt-1.5 text-xs font-medium text-ink-400">{caption}</p>}
+
+      <div className="mt-3.5 h-1.5 w-24 overflow-hidden rounded-full bg-ink-100">
+        <div className={cn("h-full rounded-full transition-[width] duration-500 ease-out", c.bar)} style={{ width: pct !== null ? `${pct}%` : "100%", opacity: pct !== null ? 1 : 0.45 }} />
+      </div>
     </div>
   );
 }

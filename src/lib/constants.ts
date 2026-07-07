@@ -24,9 +24,27 @@ export const LEAD_STAGE: Record<string, { label: string; color: string; bg: stri
   duplicate: { label: "Duplicate", color: "#94a3b8", bg: "bg-slate-100 text-slate-500" },
   junk: { label: "Junk", color: "#71717a", bg: "bg-zinc-100 text-zinc-700" },
   trash: { label: "Trash", color: "#52525b", bg: "bg-zinc-100 text-zinc-700" },
+  lost: { label: "Lost", color: "#ef4444", bg: "bg-red-50 text-red-700" },
 };
 
 export const LEAD_STAGE_ORDER = Object.keys(LEAD_STAGE);
+
+// Curated options shown in the "Lead status" picker on the lead detail page.
+// Entries with an `action` are conversion shortcuts, not stored statuses.
+export const LEAD_STATUS_PICKER: { value: string; label: string; action?: "deal" | "contact" }[] = [
+  { value: "new", label: "New" },
+  { value: "cold", label: "Cold" },
+  { value: "warm", label: "Warm" },
+  { value: "interested", label: "Interested" },
+  { value: "not_interested", label: "Not Interested" },
+  { value: "convert_deal", label: "Convert to Deal", action: "deal" },
+  { value: "convert_contact", label: "Convert to Contact", action: "contact" },
+  { value: "trash", label: "Trash" },
+  { value: "lost", label: "Lost" },
+];
+
+// Real stored statuses only (excludes the convert actions) — for plain selects/forms.
+export const LEAD_STATUS_VALUES = LEAD_STATUS_PICKER.filter((o) => !o.action).map((o) => o.value);
 
 export const LEAD_PIPELINE_STATUS: Record<string, { label: string; color: string; bg: string }> = {
   contacted: { label: "Contacted", color: "#3463ff", bg: "bg-brand-50 text-brand-700" },
@@ -105,3 +123,44 @@ export const TASK_TYPES = [
   "call", "whatsapp", "email", "site_visit", "meeting",
   "document_collection", "payment_follow_up", "booking_follow_up",
 ];
+
+/* ---------------- Real-estate buyer requirement metadata ---------------- */
+// Used by the lead detail "Requirement" block, the edit form, and the
+// inventory-matching engine (src/lib/matching.ts).
+
+export const PROPERTY_TYPES: Record<string, string> = {
+  apartment: "Apartment / Flat",
+  villa: "Villa",
+  row_house: "Row House",
+  penthouse: "Penthouse",
+  plot: "Plot / Land",
+  farmhouse: "Farmhouse",
+  commercial_office: "Commercial Office",
+  commercial_shop: "Shop / Retail",
+};
+
+// token -> label. Tokens are matched (case/space-insensitively) against
+// projects.unit_types for inventory matching.
+export const BHK_CONFIGS: Record<string, string> = {
+  "1rk": "1 RK",
+  "1bhk": "1 BHK",
+  "2bhk": "2 BHK",
+  "3bhk": "3 BHK",
+  "4bhk": "4 BHK",
+  "4plus": "4+ BHK",
+  plot: "Plot",
+  office: "Office",
+  shop: "Shop",
+};
+
+export const POSSESSION_PREF: Record<string, string> = {
+  ready_to_move: "Ready to move",
+  within_1yr: "Within 1 year",
+  "1_3yr": "1 – 3 years",
+  "3plus": "3+ years / New launch",
+};
+
+export const PURCHASE_PURPOSE: Record<string, string> = {
+  end_use: "End use",
+  investment: "Investment",
+};

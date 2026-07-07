@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { rankMatchingProjects } from "@/lib/matching";
 import { LeadDetail } from "./lead-detail";
 
 export default async function LeadDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -31,7 +32,7 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
     supabase.from("attachments").select("*, uploader:profiles(full_name)").eq("related_type", "lead").eq("related_id", id).order("created_at", { ascending: false }),
     supabase.from("audit_logs").select("id, action, before, after, created_at, actor:profiles(full_name)").eq("entity", "lead").eq("entity_id", id).order("created_at", { ascending: false }).limit(50),
     supabase.from("lead_sources").select("id, name").order("name"),
-    supabase.from("projects").select("id, name").order("name"),
+    supabase.from("projects").select("id, name, developer, city, location, property_type, price_min, price_max, unit_types, possession_date, status").order("name"),
     supabase.from("profiles").select("id, full_name").order("full_name"),
     supabase.from("deal_stages").select("id, name, sort_order").order("sort_order"),
     supabase.from("leads").select("id").order("last_activity_at", { ascending: false, nullsFirst: false }).limit(500),
@@ -42,6 +43,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
   const idx = ids.indexOf(id);
   const prevId = idx > 0 ? ids[idx - 1] : null;
   const nextId = idx >= 0 && idx < ids.length - 1 ? ids[idx + 1] : null;
+
+  // Inventory matches for the buyer requirement (server-side, re-runs on refresh).
+  const projectRows = projects.data ?? [];
+  const matches = rankMatchingProjects(lead, projectRows);
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)]">
@@ -58,9 +63,10 @@ export default async function LeadDetailPage({ params }: { params: Promise<{ id:
         attachments={attachments.data ?? []}
         history={history.data ?? []}
         sources={sources.data ?? []}
-        projects={projects.data ?? []}
+        projects={projectRows}
         owners={owners.data ?? []}
         stages={stages.data ?? []}
+        matches={matches}
         nav={{ prevId, nextId, index: idx, total: ids.length }}
       />
     </div>
